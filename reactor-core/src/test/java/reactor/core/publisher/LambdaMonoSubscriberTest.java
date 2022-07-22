@@ -205,7 +205,7 @@ public class LambdaMonoSubscriberTest {
 
 	@Test
 	public void onNextConsumerFatalDoesntTriggerCancellation() {
-		TestLogger testLogger = new TestLogger();
+		TestLogger testLogger = new TestLogger(false);
 		LoggerUtils.enableCaptureWith(testLogger);
 		try {
 			LambdaMonoSubscriber<String> tested = new LambdaMonoSubscriber<>(
@@ -216,9 +216,9 @@ public class LambdaMonoSubscriberTest {
 			TestSubscription testSubscription = new TestSubscription();
 			tested.onSubscribe(testSubscription);
 
-			//the error is expected to be thrown as it is fatal, so it doesn't go through onErrorDropped
+			//the error is expected to be thrown as it is fatal, so it doesn't go through onErrorDropped. However, throwIfJvmFatal now logs it.
 			assertThatExceptionOfType(OutOfMemoryError.class).isThrownBy(() -> tested.onNext("foo"));
-			Assertions.assertThat(testLogger.getErrContent()).isEmpty();
+			Assertions.assertThat(testLogger.getErrContent()).startsWith("[ WARN] throwIfFatal detected a jvm fatal exception, which is thrown and logged below: - java.lang.OutOfMemoryError");
 
 			assertThat(testSubscription.isCancelled).as("subscription isCancelled")
 			                                        .isFalse();
